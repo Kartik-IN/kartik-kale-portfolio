@@ -52,7 +52,7 @@ body {
   font-size: 16px;
   line-height: 1.5;
   overflow-x: hidden;
-  cursor: none;
+  cursor: auto;
 }
 
 button, input { font: inherit; }
@@ -62,6 +62,7 @@ a { color: inherit; text-decoration: none; }
 img { max-width: 100%; }
 
 .cursor-bloom {
+  display: none !important;
   pointer-events: none;
   position: fixed;
   inset: 0;
@@ -255,6 +256,7 @@ main { position: relative; }
 .music-link strong { font-family: var(--mono); font-size: 18px; font-weight: 400; letter-spacing: .04em; }
 .music-link span { margin-top: 6px; color: var(--fg-subtle); font-family: var(--mono); font-size: 12px; }
 .music-link:hover { color: var(--accent); }
+.spotify-player { width: 100%; min-height: 152px; margin-top: auto; border: 0; border-radius: 12px; background: #121212; }
 .disc { position: absolute; right: 24px; top: 98px; width: 136px; height: 136px; border: 1px solid var(--border-bright); border-radius: 50%; display: flex; align-items: center; justify-content: center; background: repeating-radial-gradient(circle, #191919 0 2px, #0e0e0e 3px 5px); box-shadow: 0 0 0 14px rgb(255 69 0 / 4%), 0 0 40px rgb(255 69 0 / 20%); animation: disc-spin 8s linear infinite paused; }
 .music-card:hover .disc { animation-play-state: running; }
 .disc span { display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; background: var(--accent); color: var(--accent-fg); font-size: 20px; }
@@ -295,6 +297,11 @@ main { position: relative; }
 
 .heatmap-frame { width: 100%; margin-top: 24px; overflow-x: auto; scrollbar-width: thin; scrollbar-color: rgb(255 69 0 / 30%) var(--bg); }
 .heatmap-frame img { display: block; width: 100%; min-width: 728px; height: 98px; object-fit: fill; opacity: 1; visibility: visible; }
+.contribution-grid { display: grid; grid-template-rows: repeat(7, 12px); grid-auto-flow: column; grid-auto-columns: 12px; gap: 2px; width: max-content; min-width: 728px; height: 98px; }
+.contribution-cell { display: block; width: 12px; height: 12px; border-radius: 2px; background: #242424; }
+.contribution-cell.level-1 { background: #3a1f0f; }.contribution-cell.level-2 { background: #7a2d10; }.contribution-cell.level-3 { background: #c53a12; }.contribution-cell.level-4 { background: var(--accent); }
+.coding-heatmap { min-height: 98px; background: repeating-linear-gradient(to right, #242424 0 12px, transparent 12px 14px), repeating-linear-gradient(to bottom, #242424 0 12px, transparent 12px 14px); background-size: 14px 14px; }
+.coding-heatmap img { display: none; }
 .coding-heatmap img { min-width: 742px; }
 .heatmap-legend { display: flex; align-items: center; justify-content: center; gap: 12px; margin: 12px auto 0; color: var(--fg-subtle); font-size: 10px; line-height: 15px; letter-spacing: .18em; }
 .heatmap-legend i { display: block; width: 12px; height: 12px; border-radius: 2px; background: var(--border); }
@@ -394,6 +401,7 @@ main { position: relative; }
   .hero-aside { min-width: 0; }
   .contacts { gap: 16px; }
   .heatmap-frame img { height: 142px; }
+  .contribution-grid { height: 142px; }
   .coding-heatmap img { height: 140px; }
   .coding-section .coding-subhead { margin-top: 40px; }
   .coding-section .coding-heatmap { margin-top: 16px; }
@@ -461,3 +469,15 @@ main { position: relative; }
   .coding-subhead { align-items: flex-start; flex-direction: column; }
   .footer-bottom { align-items: flex-start; flex-direction: column; }
 }
+
+/* Live Mapbox map */
+.pune-map, .map-placeholder { position: relative; width: 100%; height: 100%; min-height: 280px; }
+.pune-map .mapboxgl-canvas { display: block; }
+.pune-map .mapboxgl-ctrl-bottom-right { right: 8px; bottom: 8px; }
+.pune-map .mapboxgl-ctrl-attrib { padding: 2px 4px; color: #fff; background: rgb(10 10 10 / 65%); font-family: var(--mono); font-size: 9px; }
+.pune-map .mapboxgl-ctrl-attrib a { color: #fff; }
+.pune-map-marker { width: 18px; height: 18px; border: 2px solid #16d8e8; border-radius: 50%; background: #16d8e8; box-shadow: 0 0 0 7px rgb(22 216 232 / 20%), 0 0 18px rgb(22 216 232 / 70%); animation: map-ping-blue 2s ease-out infinite; }
+.map-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; background: radial-gradient(circle at 50% 50%, rgb(22 216 232 / 12%), transparent 28%), #242526; color: #fff; text-align: center; }
+.map-placeholder-title { color: #16d8e8; font-family: var(--mono); font-size: 18px; letter-spacing: .2em; }
+.map-placeholder-copy { max-width: 240px; color: var(--fg-subtle); font-family: var(--mono); font-size: 10px; line-height: 15px; }
+@media (max-width: 767px) { .pune-map, .map-placeholder { min-height: 200px; } }

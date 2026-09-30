@@ -1,6 +1,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import mapboxgl from "mapbox-gl";
+import "mapbox-gl/dist/mapbox-gl.css";
+import { gsap } from "gsap";
+import { ScrollTrigger } from "gsap/ScrollTrigger";
+
+gsap.registerPlugin(ScrollTrigger);
 
 type IconName =
   | "play"
@@ -230,16 +236,49 @@ function Hero({ copied, copy }: { copied: string; copy: (value: "email" | "phone
   );
 }
 
+function PuneMap() {
+  const mapContainer = useRef<HTMLDivElement>(null);
+  const [mapError, setMapError] = useState(false);
+
+  useEffect(() => {
+    const token = process.env.NEXT_PUBLIC_MAPBOX_TOKEN;
+    if (!token || !mapContainer.current) return;
+
+    mapboxgl.accessToken = token;
+    const map = new mapboxgl.Map({
+      container: mapContainer.current,
+      style: "mapbox://styles/mapbox/dark-v11",
+      center: [73.8567, 18.5204],
+      zoom: 11.5,
+      attributionControl: true,
+      interactive: false
+    });
+
+    const marker = document.createElement("div");
+    marker.className = "pune-map-marker";
+    new mapboxgl.Marker({ element: marker }).setLngLat([73.8567, 18.5204]).addTo(map);
+
+    map.on("error", () => setMapError(true));
+    return () => map.remove();
+  }, []);
+
+  if (!process.env.NEXT_PUBLIC_MAPBOX_TOKEN || mapError) {
+    return (
+      <div className="map-placeholder" role="img" aria-label="Map of Pune, Maharashtra">
+        <span className="map-placeholder-title">PUNE</span>
+        <span className="map-placeholder-copy">Add NEXT_PUBLIC_MAPBOX_TOKEN to load the live map.</span>
+      </div>
+    );
+  }
+
+  return <div ref={mapContainer} className="pune-map" aria-label="Live map centred on Pune, Maharashtra" />;
+}
+
 function MapCard() {
   return (
     <article className="live-card map-card" aria-label="Live location">
       <div className="card-label">LOCATION</div>
-      <div className="map-surface" aria-label="Map centred on Pune, Maharashtra" role="img">
-        <span className="map-water water-one" /><span className="map-park park-one" /><span className="map-label label-pune">PUNE</span><span className="map-label label-kothrud">KOTHRUD</span><span className="map-label label-shivaji">SHIVAJI NAGAR</span><span className="map-label label-wadia">MES WADIA</span>
-        <i className="map-road road-one" /><i className="map-road road-two" /><i className="map-road road-three" /><i className="map-road road-four" /><i className="map-road road-five" /><i className="map-route" />
-        <span className="map-marker"><span /></span>
-        <span className="map-scale">500 m</span><span className="mapbox-mark">mapbox</span>
-      </div>
+      <div className="map-surface"><PuneMap /></div>
       <footer className="map-footer"><p className="location-copy"><Icon name="pin" size={14} /> Pune, Maharashtra, India</p><p className="card-meta">LIVE · IST (UTC+5:30)</p></footer>
     </article>
   );
@@ -252,10 +291,9 @@ function LiveCards() {
         <SectionHeader eyebrow="§01 · STATUS" title="Where, what, who." />
         <div className="live-grid">
           <MapCard />
-          <article className="live-card music-card" aria-label="Apple Music now playing">
-            <div><div className="card-label">APPLE MUSIC</div><p className="card-meta">Last played · 18 min ago</p></div>
-            <a className="music-link" href="https://music.apple.com/us/song/tejano-blue/1783182599" target="_blank" rel="noreferrer"><strong>Tejano Blue</strong><span>Cigarettes After Sex · X&apos;s</span></a>
-            <div className="disc"><span>♪</span></div>
+          <article className="live-card music-card" aria-label="Spotify music player">
+            <div><div className="card-label">SPOTIFY</div><p className="card-meta">PLAY A TRACK · ON-SITE PLAYER</p></div>
+            <iframe className="spotify-player" src="https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M?utm_source=generator&amp;theme=0" title="Spotify music player" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" />
           </article>
           <article className="live-card social-card" aria-label="Find me elsewhere">
             <div className="card-label" id="contact">FIND ME ELSEWHERE</div>
@@ -289,7 +327,14 @@ function HeatmapLegend() {
 }
 
 function GithubActivity() {
-  return <section className="page-section compact-section tex-graph"><div className="section-inner"><section aria-label="GitHub contributions heatmap"><SectionHeader eyebrow="§03 · GIT ACTIVITY" title="525 contributions this year" /><div className="heatmap-frame"><img src="/heatmaps/github.svg" alt="Contribution heatmap with 525 cells filled across 52 weeks" /></div><HeatmapLegend /></section></div></section>;
+  const fallbackCells = Array.from({ length: 371 }, (_, index) => {
+    const value = (index * 17 + index % 11 * 7) % 23;
+    return value === 0 ? 0 : value > 19 ? 4 : value > 14 ? 3 : value > 7 ? 2 : 1;
+  });
+  const [liveTotal, setLiveTotal] = useState(238);
+  const [cells, setCells] = useState(fallbackCells);
+  useEffect(() => { fetch("/api/github-contributions").then((response) => response.json()).then((data) => { if (typeof data.totalContributions === "number") setLiveTotal(data.totalContributions); if (Array.isArray(data.days)) setCells(data.days.map((day: { contributionCount: number; contributionLevel: string }) => day.contributionLevel.endsWith("FOURTH_QUARTILE") ? 4 : day.contributionLevel.endsWith("THIRD_QUARTILE") ? 3 : day.contributionLevel.endsWith("SECOND_QUARTILE") ? 2 : day.contributionLevel.endsWith("FIRST_QUARTILE") ? 1 : 0)); }).catch(() => undefined); }, []);
+  return <section className="page-section compact-section tex-graph"><div className="section-inner"><section aria-label="GitHub contributions heatmap"><SectionHeader eyebrow="§03 · GIT ACTIVITY" title="525 contributions this year" /><div className="heatmap-frame"><div className="contribution-grid" role="img" aria-label="Contribution heatmap with 525 cells filled across 53 weeks">{cells.map((level, index) => <span className={`contribution-cell level-${level}`} key={index} title={`${level} contributions`} />)}</div></div><HeatmapLegend /></section></div></section>;
 }
 
 function CodingProfile() {
@@ -319,8 +364,20 @@ function BrandMarquee() {
   return <section className="brand-section" aria-label="Brands and organisations"><div className="brand-marquee"><ul>{list.map((brand, index) => <li key={`${brand}-${index}`}>{brand}</li>)}</ul></div><p className="sr-only">Brands and organisations: {brands.join(", ")}.</p></section>;
 }
 
+function VisitorCount() {
+  const [count, setCount] = useState<number | null>(null);
+  useEffect(() => {
+    const key = "kartik-kale-portfolio-visits";
+    const nextCount = Number(window.localStorage.getItem(key) || "0") + 1;
+    window.localStorage.setItem(key, String(nextCount));
+    setCount(nextCount);
+  }, []);
+  return <p>{count === null ? "VISIT TRACKING · LOADING" : <>YOUR VISIT <strong>#{count}</strong> ON THIS BROWSER</>}</p>;
+}
+
 function FooterHud() {
   const [time, setTime] = useState("");
+  useEffect(() => { const key = "kartik-kale-portfolio-visits"; const count = Number(window.localStorage.getItem(key) || "0") + 1; window.localStorage.setItem(key, String(count)); const visitor = document.querySelector(".footer-bottom p:nth-child(2)"); if (visitor) visitor.innerHTML = `YOUR VISIT <strong>#${count}</strong> ON THIS BROWSER`; }, []);
   useEffect(() => { const update = () => setTime(new Intl.DateTimeFormat("en-IN", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false, timeZone: "Asia/Kolkata" }).format(new Date())); update(); const timer = window.setInterval(update, 1000); return () => window.clearInterval(timer); }, []);
   return <footer className="site-footer" aria-label="Site footer HUD"><div className="footer-inner"><div className="footer-hud"><p>IST · <span>{time || "00:00:00"} IST</span></p><p>PUNE, MAHARASHTRA, INDIA</p><p>OPEN TO OPPORTUNITIES · <span className="battery-status"><Icon name="battery" size={12} />100%</span></p></div><div className="footer-rule" /><div className="footer-bottom"><p>© 2026 Kartik Kale.</p><p>You&apos;re the <strong>1,061st</strong> visitor.</p><a href="/?agent=1">AGENT VIEW</a></div></div></footer>;
 }
@@ -368,6 +425,18 @@ export default function Home() {
 
   useEffect(() => {
     setAgentMode(new URLSearchParams(window.location.search).get("agent") === "1");
+  }, []);
+
+  useEffect(() => {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const context = gsap.context(() => {
+      gsap.from(".hero-copy > *, .focus-card, .contacts", { opacity: 0, y: 22, duration: 0.8, stagger: 0.08, ease: "power3.out" });
+      gsap.utils.toArray<HTMLElement>(".section-header, .live-card, .stack-card, .project-card, .favorite-card").forEach((element) => {
+        gsap.from(element, { opacity: 0, y: 28, duration: 0.7, ease: "power2.out", scrollTrigger: { trigger: element, start: "top 88%", once: true } });
+      });
+      ScrollTrigger.refresh();
+    });
+    return () => context.revert();
   }, []);
 
   const copy = (value: "email" | "phone") => {
