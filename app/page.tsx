@@ -5,6 +5,7 @@ import mapboxgl from "mapbox-gl";
 import "mapbox-gl/dist/mapbox-gl.css";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import * as THREE from "three";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -124,6 +125,35 @@ function ContactPill({ kind, value, href, copied, onCopy }: { kind: "email" | "p
   );
 }
 
+function CloudCore() {
+  const mountRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const mount = mountRef.current;
+    if (!mount) return;
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 100);
+    camera.position.z = 5.2;
+    const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: "low-power" });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5)); renderer.setSize(360, 360, false); mount.appendChild(renderer.domElement);
+    const group = new THREE.Group(); scene.add(group);
+    group.add(new THREE.Mesh(new THREE.SphereGeometry(1.28, 20, 20), new THREE.MeshBasicMaterial({ color: 0x28a9ff, wireframe: true, transparent: true, opacity: 0.28 })));
+    group.add(new THREE.Mesh(new THREE.IcosahedronGeometry(0.34, 1), new THREE.MeshBasicMaterial({ color: 0x65c4ff, wireframe: true, transparent: true, opacity: 0.9 })));
+    const points = [[-1.75, 0.72, 0.2], [1.7, 0.65, -0.2], [1.55, -1.05, 0.25], [-1.65, -0.95, -0.35], [0.25, 1.75, 0.15]];
+    const nodeGeometry = new THREE.SphereGeometry(0.075, 8, 8); const nodeMaterial = new THREE.MeshBasicMaterial({ color: 0x65c4ff }); const routeMaterial = new THREE.LineBasicMaterial({ color: 0x28a9ff, transparent: true, opacity: 0.35 });
+    points.forEach(([x, y, z]) => { const node = new THREE.Mesh(nodeGeometry, nodeMaterial); node.position.set(x, y, z); group.add(node); group.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, 0, 0), new THREE.Vector3(x, y, z)]), routeMaterial)); });
+    let frame = 0; const onScroll = () => { camera.position.y = Math.min(window.scrollY * -0.0007, 0.45); camera.rotation.z = Math.min(window.scrollY * 0.00008, 0.08); }; const animate = () => { frame = requestAnimationFrame(animate); group.rotation.y += 0.0025; group.rotation.x = Math.sin(Date.now() * 0.00035) * 0.08; renderer.render(scene, camera); };
+    animate(); window.addEventListener("scroll", onScroll, { passive: true });
+    return () => { cancelAnimationFrame(frame); window.removeEventListener("scroll", onScroll); renderer.dispose(); mount.removeChild(renderer.domElement); };
+  }, []);
+  return <div ref={mountRef} className="three-cloud-core" aria-label="Animated cloud infrastructure network" role="img"><span className="three-boot-label">CLOUD CORE / ONLINE</span><span className="three-boot-name">KARTIK KALE</span></div>;
+}
+
+function CharacterAvatar() {
+  const [waving, setWaving] = useState(false);
+  const handleClick = () => { setWaving(true); window.setTimeout(() => setWaving(false), 900); };
+  return <button type="button" className={`portrait-frame character-avatar${waving ? " is-waving" : ""}`} onClick={handleClick} aria-label="Greet Kartik's avatar"><img src="/images/random/kartik-cartoon-avatar.png" alt="Cartoon avatar of Kartik Kale with glasses and backpack" /><span className="avatar-greeting">HELLO</span></button>;
+}
+
 function Header({ scrolled, menuOpen, setMenuOpen }: { scrolled: boolean; menuOpen: boolean; setMenuOpen: (value: boolean) => void }) {
   const [playing, setPlaying] = useState(false);
   const [track, setTrack] = useState(testTracks[0]);
@@ -172,12 +202,7 @@ function Header({ scrolled, menuOpen, setMenuOpen }: { scrolled: boolean; menuOp
             {navItems.map(([label, href]) => <a href={href} key={href}><span>→</span>{label}</a>)}
           </nav>
           <div className="media-controls">
-            <button className="square-button media-button" type="button" aria-label={playing ? `Pause ${track[0]}` : `Play preview of ${track[0]}`} onClick={toggleMusic}><Icon name={playing ? "pause" : "play"} size={12} /></button>
-            <a className="track-details" href={track[2]} target="_blank" rel="noreferrer"><strong>{track[0]}</strong><small>{track[1]}</small></a>
-            <div className="volume-wrap">
-              <button className="square-button media-button" type="button" aria-label={volumeOpen ? `Volume ${Math.round(volume * 100)}%` : "Unmute and open volume slider"} aria-expanded={volumeOpen} onClick={() => setVolumeOpen(!volumeOpen)}><Icon name={volume ? "volumeX" : "volume"} size={12} /></button>
-              {volumeOpen ? <input aria-label="Volume" type="range" min="0" max="1" step="0.01" value={volume} onChange={(event) => setVolume(Number(event.target.value))} /> : null}
-            </div>
+            <span className="header-status"><i />WORK IN PROGRESS</span>
             <a className="instagram-square" href="https://www.linkedin.com/in/kartik-kale" target="_blank" rel="noreferrer" aria-label="LinkedIn - Kartik Kale">+</a>
           </div>
           <button className="menu-button" type="button" aria-label={menuOpen ? "Close menu" : "Open menu"} aria-expanded={menuOpen} onClick={() => setMenuOpen(!menuOpen)}><Icon name={menuOpen ? "close" : "menu"} size={20} /></button>
@@ -207,8 +232,10 @@ function Hero({ copied, copy }: { copied: string; copy: (value: "email" | "phone
       <div className="section-inner">
         <p className="hero-intro">HOLA&nbsp; · &nbsp;I&apos;M ◢</p>
         <section className="hero" aria-label="Hero">
+          <CloudCore />
+          <div className="cloud-network" aria-hidden="true"><span className="cloud-orb orb-one" /><span className="cloud-orb orb-two" /><span className="cloud-orb orb-three" /><i className="network-line line-one" /><i className="network-line line-two" /><i className="network-line line-three" /><span className="network-core">KK</span></div>
           <div className="hero-grid">
-            <div className="portrait-frame"><img src="/images/random/kartik-avatar.png" alt="Animated cyberpunk avatar of Kartik Kale" /></div>
+            <CharacterAvatar />
             <div className="hero-copy">
               <p className="role-cycle" aria-live="polite">{roles[roleIndex]}</p>
               <h1>Kartik Kale.</h1>
@@ -291,7 +318,7 @@ function LiveCards() {
         <SectionHeader eyebrow="§01 · STATUS" title="Where, what, who." />
         <div className="live-grid">
           <MapCard />
-          <article className="live-card music-card" aria-label="Spotify music player">
+          <article className="live-card music-card work-card" aria-label="Work in progress">
             <div><div className="card-label">SPOTIFY</div><p className="card-meta">PLAY A TRACK · ON-SITE PLAYER</p></div>
             <iframe className="spotify-player" src="https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M?utm_source=generator&amp;theme=0" title="Spotify music player" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture" />
           </article>
@@ -302,7 +329,10 @@ function LiveCards() {
               <li><a href="https://www.linkedin.com/in/kartik-kale" target="_blank" rel="noreferrer"><span>LINKEDIN</span><small>@kartik-kale</small><Icon name="arrow" size={13} /></a></li>
               <li><a href="mailto:kalekartik2004@gmail.com"><span>EMAIL</span><small>kalekartik2004@gmail.com</small><Icon name="arrow" size={13} /></a></li>
             </ul>
-            <a className="resume-card" href="/resume"><img src="/images/random/resume.png" alt="" /><span><strong>RESUME</strong><small>PDF · OPEN IN TAB</small></span><Icon name="arrow" size={14} /></a>
+            <div className="resume-list" aria-label="Resumes">
+              <a className="resume-card" href="/resumes/Kartik_Kale_CyberSecurity_Resume.pdf" target="_blank" rel="noreferrer"><img src="/images/random/resume.png" alt="" /><span><strong>CYBERSECURITY RESUME</strong><small>PDF · OPEN IN TAB</small></span><Icon name="arrow" size={14} /></a>
+              <a className="resume-card" href="/resumes/Kartik_Kale_Devops_Cloud_Resume.pdf" target="_blank" rel="noreferrer"><img src="/images/random/resume.png" alt="" /><span><strong>DEVOPS / CLOUD RESUME</strong><small>PDF · OPEN IN TAB</small></span><Icon name="arrow" size={14} /></a>
+            </div>
           </article>
         </div>
       </div>
@@ -356,7 +386,8 @@ function Projects() {
 }
 
 function Favorites() {
-  return <section className="page-section section-y favorites-section" id="favorites"><div className="section-inner"><section aria-label="Gaming favorites"><SectionHeader eyebrow="§06 · GAMING" title="When the infrastructure is quiet." /><div className="favorites-grid"><article className="favorite-card ac-card"><img src="/images/games/ac.jpg" alt="Assassin's Creed Valhalla key art" /><div className="favorite-overlay" /><p><span>UBISOFT · 2020</span><b>ASSASSIN&apos;S CREED VALHALLA</b></p></article><article className="favorite-card fc-card"><div className="fc-logo">FC25</div><p><span>EA · 2024</span><b>FC 25</b></p></article></div></section></div></section>;
+  const games = ["ASSASSIN'S CREED", "FC 25", "CYBERPUNK 2077", "FORZA HORIZON"];
+  return <section className="page-section section-y favorites-section" id="favorites"><div className="section-inner"><section aria-label="Gaming favorites"><SectionHeader eyebrow="§06 · GAMING" title="When the infrastructure is quiet." /><div className="game-marquee"><div className="game-marquee-track">{[...games, ...games].map((game, index) => <article className={`game-tile game-tile-${index % games.length}`} key={`${game}-${index}`}><span className="game-scanline" /><p><span>PLAYER / 0{index % games.length + 1}</span><b>{game}</b></p></article>)}</div></div></section></div></section>;
 }
 
 function BrandMarquee() {
@@ -394,11 +425,22 @@ function AgentView() {
   return <><div className="cursor-bloom" /><div className="agent-banner" role="status">AGENT VIEW ACTIVE<span>·</span><a href="/">EXIT</a></div><Header scrolled={scrolled} menuOpen={menuOpen} setMenuOpen={setMenuOpen} /><main id="main" className="dot-grid tex-noise"><section className="page-section agent-hero"><div className="section-inner"><p className="hero-intro">HOLA&nbsp; · &nbsp;I&apos;M ◢</p><pre className="agent-pre">{agentText}</pre></div></section><LiveCards /><PersonalAside /><div className="rail-wrap" aria-hidden="true"><div className="rail-comet" /></div><TechnicalStack /><GithubActivity /><CodingProfile /><div className="rail-wrap" aria-hidden="true"><div className="rail-comet" /></div><Favorites /><BrandMarquee /></main><FooterHud /></>;
 }
 
+function LoadingScreen() {
+  return <div className="loading-screen" role="status" aria-label="Loading Kartik Kale portfolio"><div className="loading-core"><span>KK</span></div><p className="loading-kicker">INITIALIZING CLOUD SYSTEM</p><div className="loading-track"><span /></div><div className="loading-meta"><span>BOOT_SEQUENCE</span><strong>ONLINE</strong></div></div>;
+}
+
 export default function Home() {
   const [agentMode, setAgentMode] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [copied, setCopied] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const duration = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 900;
+    const timer = window.setTimeout(() => setLoading(false), duration);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     const onScroll = () => { setScrolled(window.scrollY > 16); document.documentElement.style.setProperty("--scroll-y", `${window.scrollY}px`); document.documentElement.style.setProperty("--scroll-angle", `${Math.min(window.scrollY * 0.008, 8)}deg`); };
@@ -446,6 +488,7 @@ export default function Home() {
     window.setTimeout(() => setCopied(""), 1300);
   };
 
+  if (loading) return <LoadingScreen />;
   if (agentMode) return <AgentView />;
 
   return <><div className="cursor-bloom" /><Header scrolled={scrolled} menuOpen={menuOpen} setMenuOpen={setMenuOpen} /><main id="main" className="dot-grid tex-noise"><Hero copied={copied} copy={copy} /><LiveCards /><PersonalAside /><div className="rail-wrap" aria-hidden="true"><div className="rail-comet" /></div><TechnicalStack /><GithubActivity /><CodingProfile /><Projects /><div className="rail-wrap" aria-hidden="true"><div className="rail-comet" /></div><Favorites /><BrandMarquee /></main><FooterHud /></>;
